@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>template + render</title>
+  <script src="../../dist/vue.js"></script>
+</head>
+<body>
+  <h1>当 template 和 render 同时存在时，会执行谁，页面中显示的内容是什么</h1>
+  <div id="app"></div>
+
+  <script type="text/javascript">
+    const vm = new Vue({
+      el: '#app',
+      template: '<h3>hello template</h3>',
+      render (h) {
+        return h('h3', 'hello render')
+      }
+    })
+  </script>
+</body>
+</html>

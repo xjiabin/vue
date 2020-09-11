@@ -263,9 +263,12 @@ function genConfig (name) {
   return config
 }
 
+// 判断环境变量是否有 TARGET
 if (process.env.TARGET) {
+  // 根据环境变量 TARGET，使用 genConfig() 生成 rollup 配置文件
   module.exports = genConfig(process.env.TARGET)
 } else {
+  // 没有的话，导出所有的配置
   exports.getBuild = genConfig
   exports.getAllBuilds = () => Object.keys(builds).map(genConfig)
 }
