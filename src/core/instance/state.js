@@ -48,7 +48,11 @@ export function proxy (target: Object, sourceKey: string, key: string) {
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
+  // 初始化 props,
+  // 将 props 中的属性转化为 gettre/setter，然后注入到 vm._props 中
   if (opts.props) initProps(vm, opts.props)
+  // 初始化 methods
+  
   if (opts.methods) initMethods(vm, opts.methods)
   if (opts.data) {
     initData(vm)
@@ -63,6 +67,7 @@ export function initState (vm: Component) {
 
 function initProps (vm: Component, propsOptions: Object) {
   const propsData = vm.$options.propsData || {}
+  // 给 vm 定义 _props 对象
   const props = vm._props = {}
   // cache prop keys so that future props updates can iterate using Array
   // instead of dynamic object key enumeration.
@@ -72,6 +77,7 @@ function initProps (vm: Component, propsOptions: Object) {
   if (!isRoot) {
     toggleObserving(false)
   }
+  // 遍历传入的 props 对象
   for (const key in propsOptions) {
     keys.push(key)
     const value = validateProp(key, propsOptions, propsData, vm)
@@ -85,6 +91,7 @@ function initProps (vm: Component, propsOptions: Object) {
           vm
         )
       }
+      // 将 props 属性注入到 props (vm._props) 中
       defineReactive(props, key, value, () => {
         if (!isRoot && !isUpdatingChildComponent) {
           warn(
@@ -102,7 +109,9 @@ function initProps (vm: Component, propsOptions: Object) {
     // static props are already proxied on the component's prototype
     // during Vue.extend(). We only need to proxy props defined at
     // instantiation here.
+    // 如果 vue 中不存在这个 props 属性
     if (!(key in vm)) {
+      // 将其注入到 vm 上, 通过 this._props.xxx 访问该属性
       proxy(vm, `_props`, key)
     }
   }
@@ -260,6 +269,7 @@ function createGetterInvoker(fn) {
 }
 
 function initMethods (vm: Component, methods: Object) {
+  // 获取 props，用于后面判断方法名是否存在 props 中
   const props = vm.$options.props
   for (const key in methods) {
     if (process.env.NODE_ENV !== 'production') {
@@ -336,6 +346,7 @@ export function stateMixin (Vue: Class<Component>) {
       warn(`$props is readonly.`, this)
     }
   }
+  // 不允许直接给 $data $props 赋值
   Object.defineProperty(Vue.prototype, '$data', dataDef)
   Object.defineProperty(Vue.prototype, '$props', propsDef)
 

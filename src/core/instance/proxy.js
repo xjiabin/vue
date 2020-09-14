@@ -76,14 +76,17 @@ if (process.env.NODE_ENV !== 'production') {
   }
 
   initProxy = function initProxy (vm) {
+    // 判断是否有 Proxy 对象
     if (hasProxy) {
       // determine which proxy handler to use
       const options = vm.$options
       const handlers = options.render && options.render._withStripped
         ? getHandler
         : hasHandler
+      // 通过 new Proxy 初始化 vm._renderProxy
       vm._renderProxy = new Proxy(vm, handlers)
     } else {
+      // 将 _renderProxy 设置为 Vue 实例
       vm._renderProxy = vm
     }
   }

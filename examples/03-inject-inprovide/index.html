@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inject/Provide</title>
+</head>
+<body>
+  <div id="app">
+    <m-form>
+      <div>
+        <form-item></form-item>
+      </div>
+    </m-form>
+  </div>
+  <script src="../../dist/vue.js"></script>
+  <script type="text/javascript">
+    Vue.component('MForm', {
+      provide() {
+        return { form: this }
+      },
+      data () {
+        return {
+          formMsg: 'form msg'
+        }
+      },
+      render (h) {
+        return h('div', [
+          this.$slots.default
+        ])
+      }
+    })
+    Vue.component('FormItem', {
+      inject: ['form'],
+      render (h) {
+        return h('div', 'form item')
+      }
+    })
+    var vm = new Vue({
+      el: '#app'
+    });
+  </script>
+</body>
+</html>

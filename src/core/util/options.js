@@ -338,6 +338,7 @@ function normalizeInject (options: Object, vm: ?Component) {
   const normalized = options.inject = {}
   if (Array.isArray(inject)) {
     for (let i = 0; i < inject.length; i++) {
+      // 定义成  form: {from: "form"}  的格式
       normalized[inject[i]] = { from: inject[i] }
     }
   } else if (isPlainObject(inject)) {
@@ -398,8 +399,11 @@ export function mergeOptions (
     child = child.options
   }
 
+  // 归一化 props
   normalizeProps(child, vm)
+  // 归一化 inject
   normalizeInject(child, vm)
+  // 归一化 directives
   normalizeDirectives(child)
 
   // Apply extends and mixins on the child options,

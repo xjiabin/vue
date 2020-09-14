@@ -10,11 +10,17 @@ import {
 import { updateListeners } from '../vdom/helpers/index'
 
 export function initEvents (vm: Component) {
+  // 创建一个原型为 null 的对象
+  // 用于存储事件对应的事件名和事件处理函数
+  // 对象的属性就是 事件名, 属性值就是 事件处理函数 (数组的形式)
+  // 调用 $on 方法时, 会将事件存储到 _events 中
   vm._events = Object.create(null)
   vm._hasHookEvent = false
   // init parent attached events
+  // 获取父元素上附加的事件
   const listeners = vm.$options._parentListeners
   if (listeners) {
+    // 注册自定义事件, 将父元素附加的事件注册到当前组件上
     updateComponentListeners(vm, listeners)
   }
 }
@@ -51,13 +57,21 @@ export function updateComponentListeners (
 
 export function eventsMixin (Vue: Class<Component>) {
   const hookRE = /^hook:/
+  // this.$on('click', this.clickHandler)
+  // this.$on(['click1', 'click2], this.clickHandler)
+  // 可以给多个注册多个事件注册同一个处理函数
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
     const vm: Component = this
+    // 如果 事件类型 是数组，
     if (Array.isArray(event)) {
+      // 遍历事件类型，继续调用 $on ，对事件注册事件处理函数
       for (let i = 0, l = event.length; i < l; i++) {
         vm.$on(event[i], fn)
       }
     } else {
+      // 从 _events 事件对象中获取相应事件，如果没有则初始化为 空数组
+      // 将事件处理函数保存到 _events 事件对象中对应的事件中
+      // _event.click = [clickHandler]
       (vm._events[event] || (vm._events[event] = [])).push(fn)
       // optimize hook:event cost by using a boolean flag marked at registration
       // instead of a hash lookup
