@@ -57,6 +57,8 @@ export function initState (vm: Component) {
   if (opts.data) {
     initData(vm)
   } else {
+    // 如果没有传入 data 对象，
+    // 给 vm 定义 _data 对象，并设置成响应式
     observe(vm._data = {}, true /* asRootData */)
   }
   if (opts.computed) initComputed(vm, opts.computed)
@@ -120,6 +122,8 @@ function initProps (vm: Component, propsOptions: Object) {
 
 function initData (vm: Component) {
   let data = vm.$options.data
+  // 初始化 _data，组件中 data 是函数，调用函数，返回结果
+  // 否则直接返回 data
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
@@ -132,10 +136,15 @@ function initData (vm: Component) {
     )
   }
   // proxy data on instance
+  // 获取 data 中所有的属性
   const keys = Object.keys(data)
+  // 获取 props / methods
   const props = vm.$options.props
   const methods = vm.$options.methods
   let i = keys.length
+  // 循环遍历 data 中的属性
+  // 判断是否与 props 中属性 / methods 中方法名 重名
+  // 如果属性不是以 _ 或 $ 开头的话，将其代理到 vm._data 上：this._data.xxx
   while (i--) {
     const key = keys[i]
     if (process.env.NODE_ENV !== 'production') {
@@ -177,12 +186,15 @@ const computedWatcherOptions = { lazy: true }
 
 function initComputed (vm: Component, computed: Object) {
   // $flow-disable-line
+  // 给 vm 定义 _computedWatchers 对象
   const watchers = vm._computedWatchers = Object.create(null)
   // computed properties are just getters during SSR
   const isSSR = isServerRendering()
 
+  // 遍历 computed 对象
   for (const key in computed) {
     const userDef = computed[key]
+    // 获取 getter，如果是函数，直接赋值；如果是对象，则取对象的 get 方法
     const getter = typeof userDef === 'function' ? userDef : userDef.get
     if (process.env.NODE_ENV !== 'production' && getter == null) {
       warn(
@@ -193,6 +205,7 @@ function initComputed (vm: Component, computed: Object) {
 
     if (!isSSR) {
       // create internal watcher for the computed property.
+      // 为 key 创建观察者
       watchers[key] = new Watcher(
         vm,
         getter || noop,
@@ -204,6 +217,7 @@ function initComputed (vm: Component, computed: Object) {
     // component-defined computed properties are already defined on the
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
+    // 将 key 定义到 vm 实例上
     if (!(key in vm)) {
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {
@@ -244,6 +258,7 @@ export function defineComputed (
       )
     }
   }
+  // 将 key 转换成 getter/setter，然后挂载到 vm 上
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
@@ -298,13 +313,18 @@ function initMethods (vm: Component, methods: Object) {
 }
 
 function initWatch (vm: Component, watch: Object) {
+  // 遍历 watch 对象
   for (const key in watch) {
+    // 获取处理函数
     const handler = watch[key]
+    // 如果是数组，
     if (Array.isArray(handler)) {
+      // 为数组每一个元素都创建一个 wathcer 对象
       for (let i = 0; i < handler.length; i++) {
         createWatcher(vm, key, handler[i])
       }
     } else {
+      // 创建 watcher 对象
       createWatcher(vm, key, handler)
     }
   }
@@ -316,13 +336,18 @@ function createWatcher (
   handler: any,
   options?: Object
 ) {
+  // 如果 handler 是对象
   if (isPlainObject(handler)) {
     options = handler
+    // 取对象的 handler 方法作为 handler
     handler = handler.handler
   }
+  // 如果是字符串，则为方法名
+  // 获取 vm 实例的 methods 中的方法作为 handler
   if (typeof handler === 'string') {
     handler = vm[handler]
   }
+  // 返回调用 vm.$watch 方法的结果
   return vm.$watch(expOrFn, handler, options)
 }
 

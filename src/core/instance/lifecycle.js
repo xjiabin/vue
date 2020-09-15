@@ -147,9 +147,11 @@ export function mountComponent (
   hydrating?: boolean
 ): Component {
   vm.$el = el
+  // 判断是否传入 render 函数
   if (!vm.$options.render) {
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
+      // 如果当前使用的是 runtime 版本的 vue，需要手动传入 render 函数，或者使用 带编译器版本的 vue
       /* istanbul ignore if */
       if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
         vm.$options.el || el) {
