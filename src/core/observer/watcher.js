@@ -127,10 +127,14 @@ export default class Watcher {
    */
   addDep (dep: Dep) {
     const id = dep.id
+    // 判断 newDepIds 中是否存在该 dep 对象的 id 值
     if (!this.newDepIds.has(id)) {
+      // 保存该 dep 对象的 id
       this.newDepIds.add(id)
+      // 保存 dep
       this.newDeps.push(dep)
       if (!this.depIds.has(id)) {
+        // 将当前 watcher 对象添加到 dep 对象的 subs 数组中
         dep.addSub(this)
       }
     }

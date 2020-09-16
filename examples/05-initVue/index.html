@@ -8,6 +8,7 @@
 <body>
   <div id="app">
     {{ msg }}
+    <tmp1></tmp1>
   </div>
   <script src="../../dist/vue.js"></script>
   <script type="text/javascript">
@@ -15,6 +16,12 @@
       el: '#app',
       data: {
         msg: 'hello world'
+      },
+      components: {
+        tmp1: {
+          name: 'tmp1',
+          template: 'child template'
+        }
       }
     });
   </script>

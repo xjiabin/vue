@@ -749,15 +749,18 @@
   // The current target watcher being evaluated.
   // This is globally unique because only one watcher
   // can be evaluated at a time.
+  // Dep.target 用来存放目前正在使用的 watcher
+  // 全局唯一，并且只有一次也只能有一个 watcher 被使用
   Dep.target = null;
   var targetStack = [];
-
+  // 入栈并将当前 watcher 赋值给 Dep.target
   function pushTarget (target) {
     targetStack.push(target);
     Dep.target = target;
   }
 
   function popTarget () {
+    // 出栈操作
     targetStack.pop();
     Dep.target = targetStack[targetStack.length - 1];
   }
@@ -920,18 +923,25 @@
    * collect dependencies and dispatch updates.
    */
   var Observer = function Observer (value) {
+    // 被观察的对象
     this.value = value;
+    // 依赖，每一个属性都有一个 dep 对象
     this.dep = new Dep();
+    // 初始化计数器为 0
     this.vmCount = 0;
+    // 将 Observer 实例挂载到观察对象 value 的 __ob__ 属性上
     def(value, '__ob__', this);
+    // 数组的响应式处理
     if (Array.isArray(value)) {
       if (hasProto) {
         protoAugment(value, arrayMethods);
       } else {
         copyAugment(value, arrayMethods, arrayKeys);
       }
+      // 为数组中每个对象创建一个 observer 实例
       this.observeArray(value);
     } else {
+      // 遍历对象的每一个属性，将其转换为 getter/setter
       this.walk(value);
     }
   };
@@ -942,7 +952,9 @@
    * value type is Object.
    */
   Observer.prototype.walk = function walk (obj) {
+    // 获取 obj 所有属性
     var keys = Object.keys(obj);
+    // 遍历属性，设置响应式数据
     for (var i = 0; i < keys.length; i++) {
       defineReactive(obj, keys[i]);
     }
@@ -985,23 +997,36 @@
    * Attempt to create an observer instance for a value,
    * returns the new observer if successfully observed,
    * or the existing observer if the value already has one.
+   * -----------------------------
+   * 尝试为 value 创建一个 observer 实例
+   * 如果成功创建了，会返回这个新创建的 observer 实例
+   * 或者返回已经存在的 observer 实例
    */
   function observe (value, asRootData) {
+    // 如果 value 不是对象，或者 value 是虚拟 DOM 。 返回
     if (!isObject(value) || value instanceof VNode) {
       return
     }
     var ob;
+    // 如果有 __ob__ (observe 对象) 属性，并且 __ob__ 属性是 Observer 的实例
+    // 取出 __ob__ 赋值给 ob，并返回 ob
     if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
       ob = value.__ob__;
-    } else if (
+    }
+    // 如果没有 __ob__ 属性，
+    else if (
       shouldObserve &&
       !isServerRendering() &&
+      // 如果是数组，或者是纯粹的 JavaScript 对象
       (Array.isArray(value) || isPlainObject(value)) &&
       Object.isExtensible(value) &&
+      // 如果 value 是 Vue 实例，不需要进行响应式处理
       !value._isVue
     ) {
+      // 创建一个响应式对象
       ob = new Observer(value);
     }
+    // 对根数据，计数
     if (asRootData && ob) {
       ob.vmCount++;
     }
@@ -1018,39 +1043,56 @@
     customSetter,
     shallow
   ) {
+    // 创建依赖对象实例，为当前属性 key 收集依赖（收集观察当前属性的 watcher）
     var dep = new Dep();
-
+    // 获取 obj 对象的属性描述符
     var property = Object.getOwnPropertyDescriptor(obj, key);
     if (property && property.configurable === false) {
+      // 当前属性不可配置，return
       return
     }
 
     // cater for pre-defined getter/setters
+    // 使用预定义的 getter/setters
     var getter = property && property.get;
     var setter = property && property.set;
+    // 如果只传入了 2 个参数，赋值 val
     if ((!getter || setter) && arguments.length === 2) {
       val = obj[key];
     }
-
+    // 判断是否需要深度观察子对象，(当前属性的值是对象)
+    // 并将子对象转化为 getter/setter，然后返回子对象
     var childOb = !shallow && observe(val);
     Object.defineProperty(obj, key, {
       enumerable: true,
       configurable: true,
       get: function reactiveGetter () {
+        // 获取属性值 value
+        // 如果预定义的 getter 存在，则 value 等于调用 getter 返回的值
+        // 否则直接赋予属性值
         var value = getter ? getter.call(obj) : val;
+        // 如果存在当前依赖目标(即 watcher 对象)，建立依赖
         if (Dep.target) {
+          // 收集依赖。
           dep.depend();
+          // 如果子观察目标存在，建立子对象的依赖关系
           if (childOb) {
             childOb.dep.depend();
+            // 如果属性值是数组，收集数组对象依赖
             if (Array.isArray(value)) {
               dependArray(value);
             }
           }
         }
+        // 返回属性值
         return value
       },
       set: function reactiveSetter (newVal) {
+        // 获取属性值 value
+        // 如果预定义的 getter 存在，则 value 等于调用 getter 返回的值
+        // 否则直接赋予属性值
         var value = getter ? getter.call(obj) : val;
+        // 如果新值与旧值相等，或者新旧值为 NaN 的话，return
         /* eslint-disable no-self-compare */
         if (newVal === value || (newVal !== newVal && value !== value)) {
           return
@@ -1059,14 +1101,19 @@
         if ( customSetter) {
           customSetter();
         }
+        // 如果没有 setter，则为只读属性，直接返回
         // #7981: for accessor properties without setter
         if (getter && !setter) { return }
+        // 如果预定义的 setter 存在则调用, 并传入 newVal
         if (setter) {
           setter.call(obj, newVal);
         } else {
+          // 直接更新 val
           val = newVal;
         }
+        // 如果 newVal 是对象，进行 observe 处理，并返回 子的 observe 对象
         childOb = !shallow && observe(newVal);
+        // 派发更新（发布更改通知）
         dep.notify();
       }
     });
@@ -4536,10 +4583,14 @@
    */
   Watcher.prototype.addDep = function addDep (dep) {
     var id = dep.id;
+    // 判断 newDepIds 中是否存在该 dep 对象的 id 值
     if (!this.newDepIds.has(id)) {
+      // 保存该 dep 对象的 id
       this.newDepIds.add(id);
+      // 保存 dep
       this.newDeps.push(dep);
       if (!this.depIds.has(id)) {
+        // 将当前 watcher 对象添加到 dep 对象的 subs 数组中
         dep.addSub(this);
       }
     }
@@ -4790,6 +4841,7 @@
       }
     }
     // observe data
+    // 对数据进行响应式处理
     observe(data, true /* asRootData */);
   }
 

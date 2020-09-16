@@ -11,8 +11,11 @@ let uid = 0
  * directives subscribing to it.
  */
 export default class Dep {
+  // 静态属性，保存 Watcher 对象
   static target: ?Watcher;
+  // dep 实例的 id，也就是当前 dep 实例的唯一标识
   id: number;
+  // 订阅者数组：dep 实例对应的 watcher 对象
   subs: Array<Watcher>;
 
   constructor () {
@@ -52,15 +55,18 @@ export default class Dep {
 // The current target watcher being evaluated.
 // This is globally unique because only one watcher
 // can be evaluated at a time.
+// Dep.target 用来存放目前正在使用的 watcher
+// 全局唯一，并且只有一次也只能有一个 watcher 被使用
 Dep.target = null
 const targetStack = []
-
+// 入栈并将当前 watcher 赋值给 Dep.target
 export function pushTarget (target: ?Watcher) {
   targetStack.push(target)
   Dep.target = target
 }
 
 export function popTarget () {
+  // 出栈操作
   targetStack.pop()
   Dep.target = targetStack[targetStack.length - 1]
 }
