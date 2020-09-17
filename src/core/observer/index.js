@@ -16,6 +16,8 @@ import {
   isServerRendering
 } from '../util/index'
 
+// 获取 arrayMethods 所有自身属性的属性名
+// 其实就是获取 push pop 等修补过的方法
 const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
 
 /**
@@ -53,7 +55,12 @@ export class Observer {
     def(value, '__ob__', this)
     // 数组的响应式处理
     if (Array.isArray(value)) {
+      // 判断是否有 __proto__ 属性 (浏览器兼容性)
+      // protoAugment, copyAugment 的作用是: 重新修补 会改变原数组的 数组方法 (push, pop ...)
       if (hasProto) {
+        // 改变当前数组的原型属性
+        // arrayMethods 中修补了 push pop 等方法,
+        // arrayMethods 的原型指向了数组构造函数的原型
         protoAugment(value, arrayMethods)
       } else {
         copyAugment(value, arrayMethods, arrayKeys)
@@ -84,6 +91,7 @@ export class Observer {
    * Observe a list of Array items.
    */
   observeArray (items: Array<any>) {
+    // 遍历成员, 为每一个数组元素(如果这个元素是对象的话)转换成响应式的对象
     for (let i = 0, l = items.length; i < l; i++) {
       observe(items[i])
     }
@@ -97,6 +105,8 @@ export class Observer {
  * the prototype chain using __proto__
  */
 function protoAugment (target, src: Object) {
+  // 改变当前数组的原型属性
+  // 让数组的原型属性指向 arrayMethods
   /* eslint-disable no-proto */
   target.__proto__ = src
   /* eslint-enable no-proto */
@@ -109,7 +119,9 @@ function protoAugment (target, src: Object) {
 /* istanbul ignore next */
 function copyAugment (target: Object, src: Object, keys: Array<string>) {
   for (let i = 0, l = keys.length; i < l; i++) {
+    // 获取属性名: push pop 等
     const key = keys[i]
+    // 给当前数组对象重新定义 push pop 等方法
     def(target, key, src[key])
   }
 }
@@ -164,7 +176,13 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
-  // 创建依赖对象实例，为当前属性 key 收集依赖（收集观察当前属性的 watcher）
+  /**
+   * 调试:
+   *  obj 为 data: { arr: [1, 2, 3] }
+   *  key 为 arr
+   */
+  // 创建依赖对象实例，为当前属性收集依赖（收集观察当前属性的 watcher）
+  // 也就是为当前的 arr 属性收集依赖
   const dep = new Dep()
   // 获取 obj 对象的属性描述符
   const property = Object.getOwnPropertyDescriptor(obj, key)
@@ -178,11 +196,13 @@ export function defineReactive (
   const getter = property && property.get
   const setter = property && property.set
   // 如果只传入了 2 个参数，赋值 val
+  // 设: val = arr / [1, 2, 3]
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
   // 判断是否需要深度观察子对象，(当前属性的值是对象)
   // 并将子对象转化为 getter/setter，然后返回子对象
+  // => childOb [1, 2, 3, __proto__]
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
@@ -193,11 +213,18 @@ export function defineReactive (
       // 否则直接赋予属性值
       const value = getter ? getter.call(obj) : val
       // 如果存在当前依赖目标(即 watcher 对象)，建立依赖
+      // watcher 对象的 get 方法中，会给 Dep.target 赋值
+      // watcher 对象是在 lifecycle.js 中的 mountComponent() 方法中实例化。
       if (Dep.target) {
-        // 收集依赖。
+        // 为当前属性收集依赖(arr 属性), 当属性发生变化时, 会通知 watcher
+        // 比如, 重新给 arr 赋值的时候, 会通知 watcher
+        // 先将 dep 对象添加到 watcher 对象的集合（newDeps）中
+        // 然后将 watcher 对象添加到 dep 的 subs 数组中
         dep.depend()
         // 如果子观察目标存在，建立子对象的依赖关系
         if (childOb) {
+          // 为当前 arr 数组对象收集依赖
+          // 也就是当 arr 数组中元素发生变化的时候, 通知 watcher
           childOb.dep.depend()
           // 如果属性值是数组，收集数组对象依赖
           if (Array.isArray(value)) {
@@ -313,8 +340,10 @@ export function del (target: Array<any> | Object, key: any) {
  * we cannot intercept array element access like property getters.
  */
 function dependArray (value: Array<any>) {
+  // 遍历数组
   for (let e, i = 0, l = value.length; i < l; i++) {
     e = value[i]
+    // 如果数组中的元素是对象, 对这个元素(对象) 收集依赖
     e && e.__ob__ && e.__ob__.dep.depend()
     if (Array.isArray(e)) {
       dependArray(e)

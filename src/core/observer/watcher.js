@@ -66,7 +66,7 @@ export default class Watcher {
     }
     this.cb = cb
     this.id = ++uid // uid for batching
-    this.active = true
+    this.active = true // 标识当前 watcher 是否是活动 watcher
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
     this.newDeps = []
@@ -79,6 +79,8 @@ export default class Watcher {
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
     } else {
+      // expOrFn 是字符串的时候, 例如 watch: { 'person.name': function() {...} }
+      // parsePath('person.name') 返回一个函数, 获取 person.name 的值
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
         this.getter = noop
@@ -99,6 +101,8 @@ export default class Watcher {
    * Evaluate the getter, and re-collect dependencies.
    */
   get () {
+    // 添加 target
+    // 将 watcher 对象添加到 Dep.target
     pushTarget(this)
     let value
     const vm = this.vm
@@ -126,6 +130,7 @@ export default class Watcher {
    * Add a dependency to this directive.
    */
   addDep (dep: Dep) {
+    // 获取 dep 对象的 id (唯一标识)
     const id = dep.id
     // 判断 newDepIds 中是否存在该 dep 对象的 id 值
     if (!this.newDepIds.has(id)) {
@@ -181,9 +186,16 @@ export default class Watcher {
    * Will be called by the scheduler.
    */
   run () {
+    // 判断当前 watcher 是否是活动状态
     if (this.active) {
+      // 执行 get 方法
+      // get 方法中会执行 this.getter() 方法
+      // 对于渲染 watcher 来说, getter 就是 updateComponent 函数
+      // 而 updateComponent 函数是没有返回结果的
+      // 所以对于渲染 watcher, 此处的 value 就是 undefined
       const value = this.get()
       if (
+        // value 发生变化
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even
         // when the value is the same, because the value may
@@ -195,7 +207,11 @@ export default class Watcher {
         const oldValue = this.value
         this.value = value
         if (this.user) {
+          // 如果是用户 watcher
           try {
+            // 调用回调函数
+            // watch: { name: function handleName(newVal, oldVal) { ... } }
+            // cb 就是 name 后面的 handleName 函数
             this.cb.call(this.vm, value, oldValue)
           } catch (e) {
             handleError(e, this.vm, `callback for watcher "${this.expression}"`)

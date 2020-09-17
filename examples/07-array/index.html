@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>调试数组</title>
+</head>
+<body>
+  <div id="app">
+    <h1>{{ arr }}</h1>
+  </div>
+  <script src="../../dist/vue.js"></script>
+  <script type="text/javascript">
+    var vm = new Vue({
+      el: '#app',
+      data: {
+        arr: [2, 3, 4]
+      }
+    });
+    // vm.arr[0] = 100
+    // vm.arr.length = 0
+    // vm.arr.push(200)
+  </script>
+</body>
+</html>

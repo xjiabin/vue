@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>调试 — 收集依赖的过程</title>
+</head>
+<body>
+  <div id="app">
+    <h1>{{ msg }}</h1>
+    {{ msg }}
+    <hr>
+    {{ count }}
+  </div>
+  <script src="../../dist/vue.js"></script>
+  <script type="text/javascript">
+    var vm = new Vue({
+      el: '#app',
+      data: {
+        msg: 'hello world',
+        count: 20
+      }
+    });
+  </script>
+</body>
+</html>

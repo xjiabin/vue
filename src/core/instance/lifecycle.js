@@ -192,6 +192,9 @@ export function mountComponent (
     }
   } else {
     updateComponent = () => {
+      // _render: 用户传入的 render 函数  或者  由用户传入的模板编译成的 render 函数
+      // _render 作用是最终生成 vnode
+      // _update: 内部调用 patch 方法, 将 vnode 转化为真实 DOM
       vm._update(vm._render(), hydrating)
     }
   }
