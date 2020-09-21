@@ -278,16 +278,23 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
   ) {
     warn(`Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
+  // 判断 target 是否为数组，且数组的 key 是否为合法的所以
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    // 设置数组的长度，如果 key 比 length 大的话，取 key 为数组的 length
+    // 例如：target: ['a', 'b'] , key: 3 , val: 'c'
     target.length = Math.max(target.length, key)
+    // 通过数组的 splice 方法（Vue 拦截重新定义的 splice 方法，不是原生的）对 key 位置的元素进行替换
     target.splice(key, 1, val)
     return val
   }
+  // 如果 key 已经存在于对象中，直接赋值
   if (key in target && !(key in Object.prototype)) {
     target[key] = val
     return val
   }
+  // 获取 target 的 __ob__ 属性
   const ob = (target: any).__ob__
+  // 如果 target 是 vue 实例或者 $data 直接返回
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid adding reactive properties to a Vue instance or its root $data ' +
@@ -295,11 +302,17 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     )
     return val
   }
+  // 如果 ob 不存在, 说明 target 不是响应式对象, 直接赋值
   if (!ob) {
     target[key] = val
     return val
   }
+  // 如果 ob 存在, 说明这个对象是响应式对象
+  // 把 key 设置为响应式属性
   defineReactive(ob.value, key, val)
+  // 发送通知
+  // 这里可以使用 ob.dep.notify() 是因为在收集依赖的时候
+  // 给对象的子对象也添加了 observer
   ob.dep.notify()
   return val
 }
@@ -313,11 +326,15 @@ export function del (target: Array<any> | Object, key: any) {
   ) {
     warn(`Cannot delete reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
+  // 如果目标是数组, 并且 key 是有效的索引
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    // 通过 Vue 拦截重新定义的 splice 方法删除元素
     target.splice(key, 1)
     return
   }
+  // 获取 observer 对象
   const ob = (target: any).__ob__
+  // 不能是 Vue 实例, 或者根实例 $data
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid deleting properties on a Vue instance or its root $data ' +
@@ -328,10 +345,13 @@ export function del (target: Array<any> | Object, key: any) {
   if (!hasOwn(target, key)) {
     return
   }
+  // 删除
   delete target[key]
+  // 如果不是响应式对象, 直接返回
   if (!ob) {
     return
   }
+  // 派发通知
   ob.dep.notify()
 }
 

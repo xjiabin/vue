@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Watcher的创建顺序</title>
+</head>
+<body>
+  <div id="app">
+    <div>{{ reverseMsg }}</div>
+    <div>{{ user.fullname }}</div>
+  </div>
+  <script src="../../dist/vue.js"></script>
+  <script type="text/javascript">
+    var vm = new Vue({
+      el: '#app',
+      data: {
+        msg: 'hello world',
+        user: {
+          firstname: '诸葛',
+          lastname: '亮',
+          fullname: ''
+        }
+      },
+      computed: {
+        reverseMsg () {
+          return this.msg.split('').reverse().join('')
+        }
+      },
+      watch: {
+        'user': {
+          deep: true, // 深度监听
+          immediate: true, // 立即执行一次回调函数
+          handler: function (newVal, oldVal) {
+            this.user.fullname = this.user.firstname + this.user.lastname
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
