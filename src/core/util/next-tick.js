@@ -86,9 +86,11 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+  // 把 cb 加上异常处理存入 callbacks 数组中
   callbacks.push(() => {
     if (cb) {
       try {
+        // 调用回调函数
         cb.call(ctx)
       } catch (e) {
         handleError(e, ctx, 'nextTick')

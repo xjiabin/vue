@@ -2111,9 +2111,11 @@
 
   function nextTick (cb, ctx) {
     var _resolve;
+    // 把 cb 加上异常处理存入 callbacks 数组中
     callbacks.push(function () {
       if (cb) {
         try {
+          // 调用回调函数
           cb.call(ctx);
         } catch (e) {
           handleError(e, ctx, 'nextTick');
@@ -4608,6 +4610,7 @@
           flushSchedulerQueue();
           return
         }
+        // 异步更新队列
         nextTick(flushSchedulerQueue);
       }
     }
