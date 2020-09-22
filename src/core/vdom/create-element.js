@@ -59,6 +59,7 @@ export function _createElement (
     )
     return createEmptyVNode()
   }
+  // <component v-bind:is="currentTabComponent"></component>
   // object syntax in v-bind
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
@@ -88,6 +89,7 @@ export function _createElement (
     children.length = 0
   }
   if (normalizationType === ALWAYS_NORMALIZE) {
+    // 处理用户传入的 render 函数
     children = normalizeChildren(children)
   } else if (normalizationType === SIMPLE_NORMALIZE) {
     children = simpleNormalizeChildren(children)
@@ -96,6 +98,7 @@ export function _createElement (
   if (typeof tag === 'string') {
     let Ctor
     ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag)
+    // 如果 tag 是 html 的保留标签
     if (config.isReservedTag(tag)) {
       // platform built-in elements
       if (process.env.NODE_ENV !== 'production' && isDef(data) && isDef(data.nativeOn)) {
@@ -104,14 +107,22 @@ export function _createElement (
           context
         )
       }
+      // 根据 tag 创建 VNode
       vnode = new VNode(
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       )
-    } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
+    } else if (
+      // 如果 tag 是 自定义组件，并且 data 选项存在
+      (!data || !data.pre) &&
+      // 根据 tag 自定义组件名称，查找自定义组件构造函数的声明
+      isDef(Ctor = resolveAsset(context.$options, 'components', tag))
+    ) {
+      // 根据 Ctor 创建组件的 VNode
       // component
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
+      // 自定义标签
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
@@ -121,6 +132,7 @@ export function _createElement (
       )
     }
   } else {
+    // tag 是组件
     // direct component options / constructor
     vnode = createComponent(tag, data, context, children)
   }

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>虚拟 DOM</title>
+</head>
+<body>
+  <div id="app">
+  </div>
+  <script src="../../dist/vue.runtime.js"></script>
+  <script>
+    const vm = new Vue({
+      el: '#app',
+      data: {
+        msg: 'hello world'
+      },
+      render (h) {
+        // h(tag, data, children)
+        // h('h1', this.msg)
+        // h('h1', { domProps: { innerHTML: this.msg } })
+        // h('h1', { attrs: { id: 'title' } }, this.msg)
+        const vnode = h(
+          'h1',
+          {
+            attrs: { id: 'title' }
+          },
+          this.msg
+        )
+        console.log(vnode)
+        return vnode
+      }
+    });
+  </script>
+</body>
+</html>
