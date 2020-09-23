@@ -29,10 +29,10 @@ export function simpleNormalizeChildren (children: any) {
 // with hand-written render functions / JSX. In such cases a full normalization
 // is needed to cater to all possible types of children values.
 export function normalizeChildren (children: any): ?Array<VNode> {
-  return isPrimitive(children)
-    ? [createTextVNode(children)]
-    : Array.isArray(children)
-      ? normalizeArrayChildren(children)
+  return isPrimitive(children) // 如果 children 是原始值类型
+    ? [createTextVNode(children)] // 将 children 转成文本节点 VNode，并放在数组中
+    : Array.isArray(children) // 如果 children 是数组类型
+      ? normalizeArrayChildren(children) // 继续处理
       : undefined
 }
 
