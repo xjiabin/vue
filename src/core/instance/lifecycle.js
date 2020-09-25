@@ -69,9 +69,11 @@ export function lifecycleMixin (Vue: Class<Component>) {
     if (!prevVnode) {
       // 首次渲染
       // initial render
+      // ================= oldVnode  vnode 
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
       // updates
+      // ================== oldVnode  vnode 
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     restoreActiveInstance()
