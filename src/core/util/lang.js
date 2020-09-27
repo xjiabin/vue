@@ -36,9 +36,12 @@ export function parsePath (path: string): any {
     return
   }
   const segments = path.split('.')
+  // user.name
   return function (obj) {
     for (let i = 0; i < segments.length; i++) {
       if (!obj) return
+      // obj = obj.user
+      // obj = obj.name
       obj = obj[segments[i]]
     }
     return obj

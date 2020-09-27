@@ -512,9 +512,12 @@
       return
     }
     var segments = path.split('.');
+    // user.name
     return function (obj) {
       for (var i = 0; i < segments.length; i++) {
         if (!obj) { return }
+        // obj = obj.user
+        // obj = obj.name
         obj = obj[segments[i]];
       }
       return obj
@@ -1182,16 +1185,23 @@
     ) {
       warn(("Cannot set reactive property on undefined, null, or primitive value: " + ((target))));
     }
+    // 判断 target 是否为数组，且数组的 key 是否为合法的所以
     if (Array.isArray(target) && isValidArrayIndex(key)) {
+      // 设置数组的长度，如果 key 比 length 大的话，取 key 为数组的 length
+      // 例如：target: ['a', 'b'] , key: 3 , val: 'c'
       target.length = Math.max(target.length, key);
+      // 通过数组的 splice 方法（Vue 拦截重新定义的 splice 方法，不是原生的）对 key 位置的元素进行替换
       target.splice(key, 1, val);
       return val
     }
+    // 如果 key 已经存在于对象中，直接赋值
     if (key in target && !(key in Object.prototype)) {
       target[key] = val;
       return val
     }
+    // 获取 target 的 __ob__ 属性
     var ob = (target).__ob__;
+    // 如果 target 是 vue 实例或者 $data 直接返回
     if (target._isVue || (ob && ob.vmCount)) {
        warn(
         'Avoid adding reactive properties to a Vue instance or its root $data ' +
@@ -1199,11 +1209,17 @@
       );
       return val
     }
+    // 如果 ob 不存在, 说明 target 不是响应式对象, 直接赋值
     if (!ob) {
       target[key] = val;
       return val
     }
+    // 如果 ob 存在, 说明这个对象是响应式对象
+    // 把 key 设置为响应式属性
     defineReactive(ob.value, key, val);
+    // 发送通知
+    // 这里可以使用 ob.dep.notify() 是因为在收集依赖的时候
+    // 给对象的子对象也添加了 observer
     ob.dep.notify();
     return val
   }
@@ -1217,11 +1233,15 @@
     ) {
       warn(("Cannot delete reactive property on undefined, null, or primitive value: " + ((target))));
     }
+    // 如果目标是数组, 并且 key 是有效的索引
     if (Array.isArray(target) && isValidArrayIndex(key)) {
+      // 通过 Vue 拦截重新定义的 splice 方法删除元素
       target.splice(key, 1);
       return
     }
+    // 获取 observer 对象
     var ob = (target).__ob__;
+    // 不能是 Vue 实例, 或者根实例 $data
     if (target._isVue || (ob && ob.vmCount)) {
        warn(
         'Avoid deleting properties on a Vue instance or its root $data ' +
@@ -1232,10 +1252,13 @@
     if (!hasOwn(target, key)) {
       return
     }
+    // 删除
     delete target[key];
+    // 如果不是响应式对象, 直接返回
     if (!ob) {
       return
     }
+    // 派发通知
     ob.dep.notify();
   }
 
@@ -2091,9 +2114,11 @@
 
   function nextTick (cb, ctx) {
     var _resolve;
+    // 把 cb 加上异常处理存入 callbacks 数组中
     callbacks.push(function () {
       if (cb) {
         try {
+          // 调用回调函数
           cb.call(ctx);
         } catch (e) {
           handleError(e, ctx, 'nextTick');
@@ -2471,10 +2496,10 @@
   // with hand-written render functions / JSX. In such cases a full normalization
   // is needed to cater to all possible types of children values.
   function normalizeChildren (children) {
-    return isPrimitive(children)
-      ? [createTextVNode(children)]
-      : Array.isArray(children)
-        ? normalizeArrayChildren(children)
+    return isPrimitive(children) // 如果 children 是原始值类型
+      ? [createTextVNode(children)] // 将 children 转成文本节点 VNode，并放在数组中
+      : Array.isArray(children) // 如果 children 是数组类型
+        ? normalizeArrayChildren(children) // 继续处理
         : undefined
   }
 
@@ -3461,11 +3486,14 @@
     normalizationType,
     alwaysNormalize
   ) {
+    // 如果第三个参数 data 是数组，或者是原始值（string，number，symbol，boolean）
+    // 则 data 就是 children，类似于函数重载
     if (Array.isArray(data) || isPrimitive(data)) {
       normalizationType = children;
       children = data;
       data = undefined;
     }
+    // 判断是否是首次渲染
     if (isTrue(alwaysNormalize)) {
       normalizationType = ALWAYS_NORMALIZE;
     }
@@ -3479,26 +3507,35 @@
     children,
     normalizationType
   ) {
+    // 如果 data 有定义，并且 data 是一个响应式对象
     if (isDef(data) && isDef((data).__ob__)) {
+      // 开发环境下警告，避免将响应式对象用作 vnode 的 data
        warn(
         "Avoid using observed data object as vnode data: " + (JSON.stringify(data)) + "\n" +
         'Always create fresh vnode data objects in each render!',
         context
       );
+      // 返回一个空的 VNode 节点（注释节点）
       return createEmptyVNode()
     }
+    // <component v-bind:is="currentTabComponent"></component>
     // object syntax in v-bind
     if (isDef(data) && isDef(data.is)) {
       tag = data.is;
     }
+    // 如果 tag 为 false，说明 component 的 :is 属性的 value 设置为 false
+    // 返回空的 VNode 节点
     if (!tag) {
       // in case of component :is set to falsy value
       return createEmptyVNode()
     }
     // warn against non-primitive key
     if (
+      // data 有定义，并且 data 的 key 存在，data 的 key 属性不是原始值
       isDef(data) && isDef(data.key) && !isPrimitive(data.key)
     ) {
+      // 报警告：data 的 key 避免使用非原始值
+      // 应该使用 string/number 类型的值作为 key
       {
         warn(
           'Avoid using non-primitive value as key, ' +
@@ -3507,6 +3544,7 @@
         );
       }
     }
+    // TODO: 处理作用域插槽
     // support single function children as default scoped slot
     if (Array.isArray(children) &&
       typeof children[0] === 'function'
@@ -3515,15 +3553,26 @@
       data.scopedSlots = { default: children[0] };
       children.length = 0;
     }
+    // 处理 children
     if (normalizationType === ALWAYS_NORMALIZE) {
+      // 处理用户传入的 render 函数
+      // 如果 children 是原始值的话，转化为 VNode，然后放在数组中
+      // 如果 children 是数组的话，并且 children 的子元素还是数组，将数组拍平（将多维数组转化为一维数组）
+      // 如果连续两个节点都是字符串的话，会合并文本节点
       children = normalizeChildren(children);
     } else if (normalizationType === SIMPLE_NORMALIZE) {
+      // 把二维数组转化为一维数组
+      // 如果 children 中有函数组件的话，函数组件会返回数组形式
+      // 这时候 children 就是一个二维数组，只需要把二维数组转换为一维数组
       children = simpleNormalizeChildren(children);
     }
+    // 创建 VNode 对象
     var vnode, ns;
+    // 如果 tag 是字符串类型
     if (typeof tag === 'string') {
       var Ctor;
       ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag);
+      // 如果 tag 是 html 的保留标签
       if (config.isReservedTag(tag)) {
         // platform built-in elements
         if ( isDef(data) && isDef(data.nativeOn)) {
@@ -3532,14 +3581,23 @@
             context
           );
         }
+        // 根据 tag 创建 VNode 对象
         vnode = new VNode(
           config.parsePlatformTagName(tag), data, children,
           undefined, undefined, context
         );
-      } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
+      } else if (
+        // 如果 tag 是 自定义组件，并且 data 选项未定义
+        (!data || !data.pre) &&
+        // 根据 tag (自定义组件名称)查找自定义组件构造函数的声明
+        // 在 components 对象中找
+        isDef(Ctor = resolveAsset(context.$options, 'components', tag))
+      ) {
+        // 根据 Ctor 创建组件的 VNode 对象
         // component
         vnode = createComponent(Ctor, data, context, children, tag);
       } else {
+        // 自定义标签
         // unknown or unlisted namespaced elements
         // check at runtime because it may get assigned a namespace when its
         // parent normalizes children
@@ -3549,6 +3607,7 @@
         );
       }
     } else {
+      // tag 是组件
       // direct component options / constructor
       vnode = createComponent(tag, data, context, children);
     }
@@ -4588,6 +4647,7 @@
           flushSchedulerQueue();
           return
         }
+        // 异步更新队列
         nextTick(flushSchedulerQueue);
       }
     }
@@ -4653,6 +4713,8 @@
         );
       }
     }
+    // 计算属性 Watcher 中，将 lazy 设置为 true
+    // 因为计算属性的值是在 渲染的时候调用的。
     this.value = this.lazy
       ? undefined
       : this.get();
@@ -4767,8 +4829,8 @@
         // set new value
         var oldValue = this.value;
         this.value = value;
+        // 如果是用户 watcher
         if (this.user) {
-          // 如果是用户 watcher
           try {
             // 调用回调函数
             // watch: { name: function handleName(newVal, oldVal) { ... } }
@@ -5180,20 +5242,27 @@
       cb,
       options
     ) {
+      // 获取 Vue 实例 this
       var vm = this;
       if (isPlainObject(cb)) {
+        // 如果 cb 是对象，执行 createWatcher
         return createWatcher(vm, expOrFn, cb, options)
       }
       options = options || {};
+      // 标记为用户 Watcher
       options.user = true;
+      // 创建用户 Watcher 对象
       var watcher = new Watcher(vm, expOrFn, cb, options);
+      // 判断 immediate 如果为 true
       if (options.immediate) {
+        // 立即执行一次回调函数，饼把当前值传入
         try {
           cb.call(vm, watcher.value);
         } catch (error) {
           handleError(error, vm, ("callback for immediate watcher \"" + (watcher.expression) + "\""));
         }
       }
+      // 返回取消监听的方法
       return function unwatchFn () {
         watcher.teardown();
       }

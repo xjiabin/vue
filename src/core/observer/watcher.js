@@ -92,6 +92,8 @@ export default class Watcher {
         )
       }
     }
+    // 计算属性 Watcher 中，将 lazy 设置为 true
+    // 因为计算属性的值是在 渲染的时候调用的。
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -206,8 +208,8 @@ export default class Watcher {
         // set new value
         const oldValue = this.value
         this.value = value
+        // 如果是用户 watcher
         if (this.user) {
-          // 如果是用户 watcher
           try {
             // 调用回调函数
             // watch: { name: function handleName(newVal, oldVal) { ... } }
