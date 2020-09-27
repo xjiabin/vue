@@ -42,7 +42,9 @@ export default class Dep {
   // 派发更新通知
   notify () {
     // stabilize the subscriber list first
-    // 克隆数组
+    // 克隆 subs 数组
+    // 目的是为了防止在后续执行 update() 方法时, 
+    // this.subs 数组中有新的 watcher 对象被添加进来
     const subs = this.subs.slice()
     if (process.env.NODE_ENV !== 'production' && !config.async) {
       // subs aren't sorted in scheduler if not running async

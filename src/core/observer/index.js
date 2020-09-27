@@ -216,7 +216,7 @@ export function defineReactive (
       // watcher 对象的 get 方法中，会给 Dep.target 赋值
       // watcher 对象是在 lifecycle.js 中的 mountComponent() 方法中实例化。
       if (Dep.target) {
-        // 为当前属性收集依赖(arr 属性), 当属性发生变化时, 会通知 watcher
+        // 为当前属性收集依赖(arr 属性), 当属性发生变化时(重新给 arr 赋值时), 会通知 watcher
         // 比如, 重新给 arr 赋值的时候, 会通知 watcher
         // 先将 dep 对象添加到 watcher 对象的集合（newDeps）中
         // 然后将 watcher 对象添加到 dep 的 subs 数组中
@@ -344,6 +344,7 @@ function dependArray (value: Array<any>) {
   for (let e, i = 0, l = value.length; i < l; i++) {
     e = value[i]
     // 如果数组中的元素是对象, 对这个元素(对象) 收集依赖
+    // 当数组中, 如果这个元素是对象, 并且发生了变化, 会发送通知
     e && e.__ob__ && e.__ob__.dep.depend()
     if (Array.isArray(e)) {
       dependArray(e)
