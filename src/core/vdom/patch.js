@@ -467,6 +467,7 @@ export function createPatchFunction (backend) {
       // 新老节点的开始节点是相同节点
       else if (sameVnode(oldStartVnode, newStartVnode)) {
         patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
+        // 移动到下一组开始节点
         oldStartVnode = oldCh[++oldStartIdx]
         newStartVnode = newCh[++newStartIdx]
       }
@@ -474,14 +475,17 @@ export function createPatchFunction (backend) {
       // 新老节点的结束节点是相同节点
       else if (sameVnode(oldEndVnode, newEndVnode)) {
         patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx)
+        // 移动到下一组结束节点
         oldEndVnode = oldCh[--oldEndIdx]
         newEndVnode = newCh[--newEndIdx]
       }
       // 第三种情况：
-      // 老的开始节点和新的结束节点是相同节点
+      // 老的开始节点和新的结束节点是相同节点（可能是对列表进行了反转操作）
       else if (sameVnode(oldStartVnode, newEndVnode)) { // Vnode moved right
         patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx)
+        // 将老的开始节点移动到最右边（最后面）
         canMove && nodeOps.insertBefore(parentElm, oldStartVnode.elm, nodeOps.nextSibling(oldEndVnode.elm))
+        // 获取下一组节点：下一个老的开始节点和下一个新的结束节点
         oldStartVnode = oldCh[++oldStartIdx]
         newEndVnode = newCh[--newEndIdx]
       }
@@ -489,36 +493,65 @@ export function createPatchFunction (backend) {
       // 老的结束节点和新的开始节点是相同节点
       else if (sameVnode(oldEndVnode, newStartVnode)) { // Vnode moved left
         patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
+        // 将老的结束节点移动到最左边（最前面）
         canMove && nodeOps.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm)
+        // 获取下一组节点
         oldEndVnode = oldCh[--oldEndIdx]
         newStartVnode = newCh[++newStartIdx]
       }
       // 以上 4 种情况都不满足
+      // 使用 newStartVnode 在 oldVnode 数组中依次对比
+      // 是否存在与 newStartVnode 相同的节点
+      // 从 newVnode 数组中获取第一个节点，在 oldVnode 中依次比较，寻找相同节点
+      // 先找新开始节点的 key 和老节点相同的索引，如果没有找到，再通过 sameVnode 寻找
       else {
+        // 查找优化：先将老节点的索引和 key 存在一个对象中
         if (isUndef(oldKeyToIdx)) oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx)
+        // 查找新节点中的第一个节点，在老节点中的位置
+        // 如果 newStartVnode 有 key 属性
         idxInOld = isDef(newStartVnode.key)
+          // 在对象中查找它在 oldVnode 中的位置
           ? oldKeyToIdx[newStartVnode.key]
+          // 如果没有 key 属性，遍历 oldVnode 查找，依次对比
           : findIdxInOld(newStartVnode, oldCh, oldStartIdx, oldEndIdx)
+        // 如果在 oldVnode 中没有找到该节点，说明这个节点是新的。
         if (isUndef(idxInOld)) { // New element
+          // 创建新节点，并插入到老的开始节点的前面
           createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode.elm, false, newCh, newStartIdx)
-        } else {
+        }
+        // 如果在老节点中找到了这个节点（的索引）
+        else {
+          // 获取要移动的老节点
           vnodeToMove = oldCh[idxInOld]
+          // 如果是相同节点(key 和 tag 都相同)
           if (sameVnode(vnodeToMove, newStartVnode)) {
             patchVnode(vnodeToMove, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
+            // 标记这个节点已经移动走了
             oldCh[idxInOld] = undefined
+            // 将这个节点移动到老的开始节点的前面
             canMove && nodeOps.insertBefore(parentElm, vnodeToMove.elm, oldStartVnode.elm)
-          } else {
+          }
+          // 不是相同节点
+          else {
+            // key 相同，但是 tag 不相同，创建新的 DOM 元素
             // same key but different element. treat as new element
             createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode.elm, false, newCh, newStartIdx)
           }
         }
+        // 将下一个节点，作为新的开始节点，重复上面步骤依次处理
         newStartVnode = newCh[++newStartIdx]
       }
     }
+    // 如果老节点数组先被遍历完
+    // 说明新节点有剩余，需要创建新的节点
     if (oldStartIdx > oldEndIdx) {
       refElm = isUndef(newCh[newEndIdx + 1]) ? null : newCh[newEndIdx + 1].elm
+      // 将新节点剩余的数组插入到老节点的后面
       addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx, insertedVnodeQueue)
-    } else if (newStartIdx > newEndIdx) {
+    }
+    // 如果新节点数组先被遍历完
+    // 说明老节点有剩余，需要删除这些节点
+    else if (newStartIdx > newEndIdx) {
       removeVnodes(oldCh, oldStartIdx, oldEndIdx)
     }
   }
