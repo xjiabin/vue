@@ -19,6 +19,8 @@ function createFunction (code, errors) {
 }
 
 export function createCompileToFunctionFn (compile: Function): Function {
+  // 创建不带原型的 cache 对象
+  // 目的是通过闭包，缓存编译之后的结果
   const cache = Object.create(null)
 
   return function compileToFunctions (
@@ -26,6 +28,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     options?: CompilerOptions,
     vm?: Component
   ): CompiledFunctionResult {
+    // 克隆一份 vue 的 options 选项，目的是为了避免污染 vue 的 options
     options = extend({}, options)
     const warn = options.warn || baseWarn
     delete options.warn
@@ -49,7 +52,8 @@ export function createCompileToFunctionFn (compile: Function): Function {
     }
 
     // check cache
-    const key = options.delimiters
+    // 1. 读取缓存中的 compiledFunctionResult 对象，如果有 则直接返回
+    const key = options.delimiters // 这是完整版的 vue 才有的选项，作用是改变差值表达式 使用的符号，如: {{ }} => ``
       ? String(options.delimiters) + template
       : template
     if (cache[key]) {
@@ -57,6 +61,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     }
 
     // compile
+    // 2. 把模板编译为编译对象（render，staticRenderFns），字符串形式的 js 代码
     const compiled = compile(template, options)
 
     // check compilation errors/tips
@@ -88,6 +93,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     }
 
     // turn code into functions
+    // 3. 把字符串形式的 js 代码，转换为 js 方法
     const res = {}
     const fnGenErrors = []
     res.render = createFunction(compiled.render, fnGenErrors)
@@ -108,7 +114,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
         )
       }
     }
-
+    // 4. 缓存并返回 res 对象（render，staticRenderFns）
     return (cache[key] = res)
   }
 }

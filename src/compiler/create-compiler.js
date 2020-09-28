@@ -5,11 +5,14 @@ import { detectErrors } from './error-detector'
 import { createCompileToFunctionFn } from './to-function'
 
 export function createCompilerCreator (baseCompile: Function): Function {
+  // baseOptions：与平台相关的 options
+  // src/platforms/web/compiler/options.js 中定义
   return function createCompiler (baseOptions: CompilerOptions) {
     function compile (
-      template: string,
-      options?: CompilerOptions
+      template: string, // 模板字符串
+      options?: CompilerOptions // 用户传入的 options
     ): CompiledResult {
+      // 用于合并 options
       const finalOptions = Object.create(baseOptions)
       const errors = []
       const tips = []
