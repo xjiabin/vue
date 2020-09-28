@@ -30,7 +30,11 @@ export class CodegenState {
     const isReservedTag = options.isReservedTag || no
     this.maybeComponent = (el: ASTElement) => !!el.component || !isReservedTag(el.tag)
     this.onceId = 0
+    // 用来存储静态根节点生成的代码
+    // 因为一个模板中可能有多个静态根节点，所以此处是数组
+    // 处理完成之后，它里面存储的就是字符串形式的代码
     this.staticRenderFns = []
+    // 用来标记当前处理的节点是否是用 v-pre 标记的
     this.pre = false
   }
 }
@@ -53,10 +57,17 @@ export function generate (
 }
 
 export function genElement (el: ASTElement, state: CodegenState): string {
+  // 如果 el 有 parent 属性
+  // 记录 el.pre 
+  // 因为如果父节点是 v-pre 标记的节点的话
+  // 其子节点也是静态的
+  // v-pre 指令标记的节点都是静态节点，子节点都是静态的
   if (el.parent) {
     el.pre = el.pre || el.parent.pre
   }
-
+  // 处理静态根节点
+  // el.staticProcessed 用来标记当前节点是否已经被处理了，genElement 会被递归调用
+  // 这里做判断是为了防止重复处理节点
   if (el.staticRoot && !el.staticProcessed) {
     return genStatic(el, state)
   } else if (el.once && !el.onceProcessed) {
@@ -77,9 +88,13 @@ export function genElement (el: ASTElement, state: CodegenState): string {
     } else {
       let data
       if (!el.plain || (el.pre && state.maybeComponent(el))) {
+        // 生成元素的 属性/指令/事件 等
+        // 处理各种指令, 包括 genDirectives(model/text/html)
+        // 将 ast 对象中的相应属性转换成 createElement 所需要的 data 对象的字符串形式
         data = genData(el, state)
       }
-
+      // 处理子节点
+      // 将 ast 对象的子节点转换成 createElement 所需的形式(数组形式)
       const children = el.inlineTemplate ? null : genChildren(el, state, true)
       code = `_c('${el.tag}'${
         data ? `,${data}` : '' // data
@@ -485,6 +500,8 @@ export function genChildren (
       ? getNormalizationType(children, state.maybeComponent)
       : 0
     const gen = altGenNode || genNode
+    // map 中最终通过 gen 函数, 将所有节点转换为相应的代码
+    // 使用 join 方法将数组拼接成字符串, 把结果存储到数组中
     return `[${children.map(c => gen(c, state)).join(',')}]${
       normalizationType ? `,${normalizationType}` : ''
     }`
@@ -523,9 +540,12 @@ function needsNormalization (el: ASTElement): boolean {
 }
 
 function genNode (node: ASTNode, state: CodegenState): string {
+  // 标签
   if (node.type === 1) {
     return genElement(node, state)
-  } else if (node.type === 3 && node.isComment) {
+  }
+  // 注释 文本
+  else if (node.type === 3 && node.isComment) {
     return genComment(node)
   } else {
     return genText(node)
@@ -535,6 +555,7 @@ function genNode (node: ASTNode, state: CodegenState): string {
 export function genText (text: ASTText | ASTExpression): string {
   return `_v(${text.type === 2
     ? text.expression // no need for () because already wrapped in _s()
+    // JSON.stringify(text.text)  给字符串加上引号 hello => "hello"
     : transformSpecialNewlines(JSON.stringify(text.text))
   })`
 }
