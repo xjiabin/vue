@@ -93,7 +93,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     }
 
     // turn code into functions
-    // 3. 把字符串形式的 js 代码，转换为 js 方法
+    // 3. 调用 createFunction，把字符串形式的 js 代码，转换为 js 函数
     const res = {}
     const fnGenErrors = []
     res.render = createFunction(compiled.render, fnGenErrors)

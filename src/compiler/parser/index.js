@@ -65,8 +65,8 @@ export function createASTElement (
   return {
     type: 1,
     tag,
-    attrsList: attrs,
-    attrsMap: makeAttrsMap(attrs),
+    attrsList: attrs, // 标签的属性数组
+    attrsMap: makeAttrsMap(attrs), // 将属性转换为对象的形式
     rawAttrsMap: {},
     parent,
     children: []

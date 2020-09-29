@@ -59,14 +59,14 @@ export function generate (
 export function genElement (el: ASTElement, state: CodegenState): string {
   // 如果 el 有 parent 属性
   // 记录 el.pre 
-  // 因为如果父节点是 v-pre 标记的节点的话
-  // 其子节点也是静态的
+  // 因为如果父节点是 v-pre 标记的节点的话，其子节点也是静态的
   // v-pre 指令标记的节点都是静态节点，子节点都是静态的
   if (el.parent) {
     el.pre = el.pre || el.parent.pre
   }
   // 处理静态根节点
-  // el.staticProcessed 用来标记当前节点是否已经被处理了，genElement 会被递归调用
+  // el.staticProcessed 用来标记当前节点是否已经被处理了，
+  // 因为 genElement 会被递归调用
   // 这里做判断是为了防止重复处理节点
   if (el.staticRoot && !el.staticProcessed) {
     return genStatic(el, state)
@@ -112,6 +112,7 @@ export function genElement (el: ASTElement, state: CodegenState): string {
 
 // hoist static sub-trees out
 function genStatic (el: ASTElement, state: CodegenState): string {
+  // 标记：当前节点已经被处理了
   el.staticProcessed = true
   // Some elements (templates) need to behave differently inside of a v-pre
   // node.  All pre nodes are static roots, so we can use this as a location to
@@ -120,10 +121,13 @@ function genStatic (el: ASTElement, state: CodegenState): string {
   if (el.pre) {
     state.pre = el.pre
   }
+  // 保存静态节点
+  // 将静态根节点转换成【生成 vnode 的 JS 代码】
   state.staticRenderFns.push(`with(this){return ${genElement(el, state)}}`)
   state.pre = originalPreState
+  // renderStatic
   return `_m(${
-    state.staticRenderFns.length - 1
+    state.staticRenderFns.length - 1 // 传入刚刚添加的代码 的索引
   }${
     el.staticInFor ? ',true' : ''
   })`
@@ -483,6 +487,7 @@ export function genChildren (
   altGenNode?: Function
 ): string | void {
   const children = el.children
+  // 是否有子节点
   if (children.length) {
     const el: any = children[0]
     // optimize single v-for
@@ -496,6 +501,7 @@ export function genChildren (
         : ``
       return `${(altGenElement || genElement)(el, state)}${normalizationType}`
     }
+    // 获取 createElement 的第四个参数，数组是否需要被拍平
     const normalizationType = checkSkip
       ? getNormalizationType(children, state.maybeComponent)
       : 0
@@ -556,11 +562,13 @@ export function genText (text: ASTText | ASTExpression): string {
   return `_v(${text.type === 2
     ? text.expression // no need for () because already wrapped in _s()
     // JSON.stringify(text.text)  给字符串加上引号 hello => "hello"
+    // transformSpecialNewlines 将特殊的换行修正，防止以为情况
     : transformSpecialNewlines(JSON.stringify(text.text))
   })`
 }
 
 export function genComment (comment: ASTText): string {
+  // createEmptyVNode
   return `_e(${JSON.stringify(comment.text)})`
 }
 

@@ -20,7 +20,7 @@ export function createCompilerCreator (baseCompile: Function): Function {
       let warn = (msg, range, tip) => {
         (tip ? tips : errors).push(msg)
       }
-
+      // 如果 options 存在，开始合并 options 和 baseOptions
       if (options) {
         if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
           // $flow-disable-line
@@ -60,13 +60,17 @@ export function createCompilerCreator (baseCompile: Function): Function {
       }
 
       finalOptions.warn = warn
-
+      // 调用 baseCompile 把模板编译成 render 函数
+      // compiled 是一个对象 { ast, render, staticRenderFns }
+      // 此时的 render 函数是一个 字符串形式的 js 代码
+      // 最终在 compileToFunctions 中转换成 js 形式的函数
       const compiled = baseCompile(template.trim(), finalOptions)
       if (process.env.NODE_ENV !== 'production') {
         detectErrors(compiled.ast, warn)
       }
       compiled.errors = errors
       compiled.tips = tips
+      // 返回编译好的对象
       return compiled
     }
 

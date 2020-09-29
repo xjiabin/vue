@@ -19,11 +19,12 @@ export const createCompiler = createCompilerCreator(function baseCompile (
     // 优化抽象语法树
     optimize(ast, options)
   }
-  // 把抽象语法树生成字符串形式的 js 代码
+  // 把抽象语法树生成 `字符串形式` 的 js 代码
   const code = generate(ast, options)
   return {
     ast,
-    // 渲染函数
+    // 渲染函数，此时的 render 是字符串形式的，并不是我们最终调用的那个 render 函数
+    // 最终还要通过 compileToFunctions 转换成函数的形式（createFunction）
     render: code.render,
     // 静态渲染函数：生成静态 VNode 树
     staticRenderFns: code.staticRenderFns
