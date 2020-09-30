@@ -3320,10 +3320,12 @@
     if (isUndef(Ctor)) {
       return
     }
-
+    // 获取 Vue 构造函数
     var baseCtor = context.$options._base;
 
     // plain options object: turn it into a constructor
+    // 如果 Ctor 是一个对象，
+    // 将其转换成 Vue 构造函数
     if (isObject(Ctor)) {
       Ctor = baseCtor.extend(Ctor);
     }
@@ -3395,6 +3397,7 @@
     }
 
     // install component management hooks onto the placeholder node
+    // 安装组件的钩子函数， init/prepatch/insert/destroy
     installComponentHooks(data);
 
     // return a placeholder vnode
@@ -3428,6 +3431,7 @@
   }
 
   function installComponentHooks (data) {
+    // 用户传入的钩子函数
     var hooks = data.hook || (data.hook = {});
     for (var i = 0; i < hooksToMerge.length; i++) {
       var key = hooksToMerge[i];
@@ -5493,24 +5497,29 @@
      */
     Vue.extend = function (extendOptions) {
       extendOptions = extendOptions || {};
+      // Vue 构造函数 / 组件的构造函数
       var Super = this;
       var SuperId = Super.cid;
+      // 从缓存中加载组件的构造函数
       var cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {});
       if (cachedCtors[SuperId]) {
         return cachedCtors[SuperId]
       }
-
+      // 获取组件名称
       var name = extendOptions.name || Super.options.name;
       if ( name) {
         validateComponentName(name);
       }
 
       var Sub = function VueComponent (options) {
+        // 初始化
         this._init(options);
       };
+      // 继承 Vue 的原型
       Sub.prototype = Object.create(Super.prototype);
       Sub.prototype.constructor = Sub;
       Sub.cid = cid++;
+      // 合并选项
       Sub.options = mergeOptions(
         Super.options,
         extendOptions
@@ -5538,6 +5547,7 @@
         Sub[type] = Super[type];
       });
       // enable recursive self-lookup
+      // 保存组件构造函数
       if (name) {
         Sub.options.components[name] = Sub;
       }
@@ -5550,6 +5560,7 @@
       Sub.sealedOptions = extend({}, Sub.options);
 
       // cache constructor
+      // 把组件的构造函数缓存到 options._Ctor
       cachedCtors[SuperId] = Sub;
       return Sub
     };
@@ -5581,6 +5592,9 @@
         id,
         definition
       ) {
+        // 如果没有定义该参数。
+        // 说明是获取这个 组件/指令/过滤器
+        // this.options.components
         if (!definition) {
           return this.options[type + 's'][id]
         } else {
@@ -5588,13 +5602,18 @@
           if ( type === 'component') {
             validateComponentName(id);
           }
+          // 如果 定义 方式是对象。
+          // Vue.component('comp', { ... })
           if (type === 'component' && isPlainObject(definition)) {
             definition.name = definition.name || id;
+            // 把组件配置选项转换为组件的 构造函数
             definition = this.options._base.extend(definition);
           }
           if (type === 'directive' && typeof definition === 'function') {
             definition = { bind: definition, update: definition };
           }
+          // 全局注册，存储资源并赋值
+          // this.options['components']['comp'] = definition
           this.options[type + 's'][id] = definition;
           return definition
         }

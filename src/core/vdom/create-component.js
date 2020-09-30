@@ -108,10 +108,12 @@ export function createComponent (
   if (isUndef(Ctor)) {
     return
   }
-
+  // 获取 Vue 构造函数
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
+  // 如果 Ctor 是一个对象，
+  // 将其转换成 Vue 构造函数
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor)
   }
@@ -183,6 +185,7 @@ export function createComponent (
   }
 
   // install component management hooks onto the placeholder node
+  // 安装组件的钩子函数， init/prepatch/insert/destroy
   installComponentHooks(data)
 
   // return a placeholder vnode
@@ -224,6 +227,7 @@ export function createComponentInstanceForVnode (
 }
 
 function installComponentHooks (data: VNodeData) {
+  // 用户传入的钩子函数
   const hooks = data.hook || (data.hook = {})
   for (let i = 0; i < hooksToMerge.length; i++) {
     const key = hooksToMerge[i]
