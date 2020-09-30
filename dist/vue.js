@@ -11551,6 +11551,8 @@
           // 生成元素的 属性/指令/事件 等
           // 处理各种指令, 包括 genDirectives(model/text/html)
           // 将 ast 对象中的相应属性转换成 createElement 所需要的 data 对象的字符串形式
+          // 如：<div id="app"></div>
+          // 生成属性：data = "{attrs:{"id":"app"}}"
           data = genData$2(el, state);
         }
         // 处理子节点
